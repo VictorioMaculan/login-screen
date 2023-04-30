@@ -10,8 +10,15 @@ class Gui:
         self.registering()
         self.root.title('Login/Register')
         self.root.geometry('400x500')
-        self.root.mainloop()
-       
+        self.root.mainloop()   
+    
+    @staticmethod
+    def isInputValid(email):
+        con = sqlite3.connect('users.db')
+        cursor = con.cursor()
+        cursor.execute(f'select * from users where email = ?', (email,))
+        return len(cursor.fetchall()) == 0
+
     @staticmethod
     def newuser(name, email, password):
         con = sqlite3.connect('users.db')
@@ -29,7 +36,6 @@ class Gui:
             con.commit()
             cursor.close()
             con.close()
-            
         
     def activate(self, frame):
         if self.activeframe is not None:
@@ -54,12 +60,11 @@ class Gui:
         password = tk.Entry(register, font=defaultfont, width=35)
         password.pack()
 
-        tk.Button(register, text='Registrar', font=defaultfont).pack(pady=10)
+        tk.Button(register, text='Registrar', font=defaultfont, command=self.emailverification).pack(pady=10)
         
         tk.Button(register, text='Login', font=('Times New Roman', 10), command=self.login).pack(side='bottom')
         tk.Label(register, text='Ja tem uma conta?', font=('Times New Roman', 10)).pack(side='bottom')
         self.activate(register)
-    
     def login(self):
         login_ = tk.Frame(self.root)
         
@@ -73,13 +78,14 @@ class Gui:
         password = tk.Entry(login_, font=defaultfont, width=35)
         password.pack()
         
-        tk.Button(login_, text='Login', font=defaultfont).pack(pady=10)
+        tk.Button(login_, text='Login', font=defaultfont, command=self.emailverification).pack(pady=10)
         
         tk.Button(login_, text='Cadastrar', font=('Times New Roman', 10), command=self.registering).pack(side='bottom')
         tk.Label(login_, text='Não tem uma conta?', font=('Times New Roman', 10)).pack(side='bottom')
         self.activate(login_)
         
-    def emailverification(self, email='-'):
+    def emailverification(self, email):
+        
         verify = tk.Frame(self.root)
         
         tk.Label(verify, text='Verificação do Email', font=('Times New Roman', 16)).pack(pady=20)
@@ -94,4 +100,4 @@ class Gui:
         
         
 
-Gui.newuser('Roberto', '167761', '167761')
+Gui()
