@@ -1,0 +1,9 @@
+Olá,
+
+Seu email foi utilizado no sistema de Login/Register OpenSource desenvolvido por Victório Maculan,
+você poderá encontrar mais informações por este link: https://github.com/VictorioMaculan/login-screen
+
+O código para cadastro é:
+{sendcode}
+
+Esse é um Email automatico, responde-lo não trará nenhuma resposta.

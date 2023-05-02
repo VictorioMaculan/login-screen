@@ -2,7 +2,9 @@ import tkinter as tk
 import sqlite3
 
 defaultfont = ('Times New Roman', 12)
-database = 'users.db'
+database = 'C:\\Users\\User\\Documents\\GitHub\\login-screen\\login-screen\\users.db'
+message_file = 'C:\\Users\\User\\Documents\\GitHub\\login-screen\\login-screen\\msg.txt'
+systememail = '-'
 
 class Gui:
     def __init__(self):   
@@ -11,9 +13,12 @@ class Gui:
         self.activeframe = None
         
         self.registering()
+        self.preparedb()
+        
         self.outmsg.set('-')
         self.root.title('Login/Register')
         self.root.geometry('400x500')
+        
         self.root.mainloop()
     
     @staticmethod
@@ -36,21 +41,43 @@ class Gui:
             cursor.close()
         return len(out) > 0        
     
+    @staticmethod
+    def sendemail(email, sendcode='000'):
+        import smtplib
+        from email.message import EmailMessage
+        
+        message = EmailMessage()
+        with open(message_file) as msg:
+            message.set_content(msg.read().replace('{sendcode}', str(sendcode)))
+        
+        message['Subject'] = 'Registro (Login/Registering System)'
+        message['From'] = systememail
+        message['To'] = email
+        
+        with smtplib.SMTP(host='localhost') as host:
+            host.send_message(message)
+        # TODO: Finish and fix this.    
+        
+            
+    @staticmethod
+    def preparedb():
+        with sqlite3.connect(database) as con:
+            cursor = con.cursor()
+        try:
+            cursor.execute('''create table users(id integer primary key autoincrement,
+                name text,
+                email text,
+                password text)''')
+        except sqlite3.OperationalError:
+            return
+        
     def newuser(self, name, email, password):
         with sqlite3.connect(database) as con:
             cursor = con.cursor()
-            try:
-                cursor.execute('''create table users(id integer primary key autoincrement,
-                            name text,
-                            email text,
-                            password text)''')
-            except sqlite3.OperationalError:
-                pass
-            finally:
-                cursor.execute('''insert into users(name, email, password)
-                            values(?, ?, ?)''', (name, email, password))
-                con.commit()
-                cursor.close()
+            cursor.execute('''insert into users(name, email, password)
+                        values(?, ?, ?)''', (name, email, password))
+            cursor.close()
+            con.commit()
         self.outmsg.set('Cadastrado. Por favor, fazer login.')
         self.login()
                 
@@ -91,14 +118,14 @@ class Gui:
         tk.Label(login_, text='Faça seu Login!', font=('Times New Roman', 16)).pack(pady=20)
         
         tk.Label(login_, text='Email', font=defaultfont).pack(pady=10)
-        user = tk.Entry(login_, font=defaultfont, width=35)
-        user.pack()
+        email = tk.Entry(login_, font=defaultfont, width=35)
+        email.pack()
         
         tk.Label(login_, text='Senha', font=defaultfont).pack(pady=10)
         password = tk.Entry(login_, font=defaultfont, width=35)
         password.pack()
         
-        tk.Button(login_, text='Login', font=defaultfont).pack(pady=10)
+        tk.Button(login_, text='Login', font=defaultfont, command=lambda: self.loggedscreen(email.get(), password.get())).pack(pady=10)
         
         tk.Label(login_, textvariable=self.outmsg, font=defaultfont).pack(side='bottom', pady=20)
         tk.Button(login_, text='Cadastrar', font=('Times New Roman', 10), command=self.registering).pack(side='bottom')
@@ -109,10 +136,13 @@ class Gui:
         from random import randint
         
         if not self.isRegisterValid(name, email, password):
-            self.outmsg.set(('[ERRO: Informação(s) inválida(s)].'))
+            self.outmsg.set(('[ERRO: Parâmetro(s) inválido(s)].'))
             return
 
         sendcode = str(randint(100, 999))
+        self.outmsg.set(sendcode)
+        # self.sendemail(email, sendcode)
+        
         verify = tk.Frame(self.root)
         
         tk.Label(verify, text='Verificação do Email', font=('Times New Roman', 16)).pack(pady=20)
@@ -128,14 +158,15 @@ class Gui:
         tk.Label(verify, textvariable=self.outmsg, font=defaultfont).pack(side='bottom', pady=20)
         self.activate(verify)
 
-    def loggedscreen(self, name):
-        
-        # TODO: Adicionar uma verificação de login válido, subir erro se não for.
+    def loggedscreen(self, email, password):
+        if not self.isLoginValid(email, password):
+            self.outmsg.set('[ERRO: Parâmetro(s) Inválido(s)/Senha Incorreta]. ')
+            return
         
         logged = tk.Frame(self.root)
-        tk.Label(logged, text=f'Olá {name}, agora você está logado(a)!', font=defaultfont).pack()
-        tk.Button(logged, text='Voltar', font=defaultfont, command=self.login).pack()
+        tk.Label(logged, text=f'Olá {email}, agora você está logado(a)!', font=defaultfont).pack(pady=20)
         
+        tk.Button(logged, text='Sair', font=defaultfont, command=self.login).pack(pady=20)
         self.activate(logged)
 
 Gui()
