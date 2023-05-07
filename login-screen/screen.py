@@ -2,7 +2,7 @@ import tkinter as tk
 import sqlite3
 
 defaultfont = ('Times New Roman', 12)
-database = 'C:\\Users\\User\\Documents\\GitHub\\login-screen\\login-screen\\users.db'
+database = 'users.db'
 
 class Gui:
     def __init__(self):   
