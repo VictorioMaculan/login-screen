@@ -2,7 +2,7 @@ import tkinter as tk
 import sqlite3
 
 defaultfont = ('Times New Roman', 12)
-database = 'users.db'
+database = 'C:\\Users\\User\\Documents\\GitHub\\login-screen\\login-screen\\users.db'
 
 class Gui:
     def __init__(self):   
@@ -20,10 +20,11 @@ class Gui:
         
         self.outmsg.set('-')
         self.root.title('Login/Register')
-        self.root.geometry('400x500')
+        self.root.geometry('400x450')
         
         self.root.mainloop()
-        
+    
+    # Methods
     @staticmethod
     def preparedb():
         with sqlite3.connect(database) as con:
@@ -42,7 +43,7 @@ class Gui:
             finally:
                 cursor.close()
                 con.commit()
-                
+        # TODO: Melhorar isso aqui :P
     @staticmethod
     def getTableContent(table):
         with sqlite3.connect(database) as con:
@@ -96,6 +97,7 @@ class Gui:
             cursor.close()
             con.commit()
         self.outmsg.set('Adicionado aos Logins Rápidos.')
+        self.fastusers = self.getTableContent(table='fastusers')
     
     def delFastUser(self, email):
         with sqlite3.connect(database) as con:
@@ -103,11 +105,14 @@ class Gui:
             cursor.execute(f'delete from fastusers where email = ?', (email,))
             cursor.close()
         self.fastusers = self.getTableContent(table='fastusers')
-        self.choose()
+        self.outmsg.set('Removido dos Logins Rápidos.')
     
     def newUser(self, name, email, password):
         if not self.isRegisterValid(name, email, password):
             self.outmsg.set('[ERRO: Parâmetro(s) Inválido(s)/Email já em Uso]')
+            return
+        if 12 < len(password.strip()) < 6:
+            self.outmsg.set('[ERRO: A senha deve ter entre 6 e 12 caracteres]')
             return
         
         with sqlite3.connect(database) as con:
@@ -118,7 +123,17 @@ class Gui:
             con.commit()
         self.outmsg.set('Cadastrado. Por favor, fazer login.')
         self.login()
+    
+    # Specific Methods
+    def onoff_FastUser(self, name, email, password):
+        if self.isEmailUnique(email, table='fastusers'):
+            self.newFastUser(name, email, password)
+        else:
+            self.delFastUser(email)
+        self.logged(email, password)
         
+    
+    # Frames
     def registering(self):
         register = tk.Frame(self.root)
 
@@ -168,31 +183,33 @@ class Gui:
         self.activate(login_)
         
     def logged(self, email, password):
+        
         if not self.isLoginValid(email, password):
-            self.outmsg.set('[ERRO: Parâmetro(s) Inválido(s)/Senha Incorreta]. ')
+            self.outmsg.set('[ERRO: Parâmetro(s) Inválido(s)/Senha Incorreta].')
             return
         
         with sqlite3.connect(database) as con:
             con.row_factory = sqlite3.Row
             cursor = con.cursor()
-            account = [x for x in cursor.execute('select * from users where email = ?', (email,))][0]
+            info = [x for x in cursor.execute('select * from users where email = ?', (email,))][0]
             
-        
         logged_ = tk.Frame(self.root, width=500, height=400)
         tk.Label(logged_, text=f'Logado! Informações da Conta:', font=('Times New Roman', 16)).place(y=12, x=200, anchor='center')
         
-        tk.Label(logged_, text=f'Nome = {account["name"]}', font=defaultfont).place(y=30, x=0)
-        tk.Label(logged_, text=f'Email = {account["email"]}', font=defaultfont).place(y=60, x=0)
-        tk.Label(logged_, text=f'Senha = {account["password"]}', font=defaultfont).place(y=90, x=0)
-
-        tk.Button(logged_, text='Ativar Login Rápido', font=defaultfont,
-                  command=lambda: self.newFastUser(account['name'],
-                                                   account['email'],
-                                                   account['password'])).place(y=125, x=5)
+        tk.Label(logged_, text=f'Nome = {info["name"]}', font=defaultfont).place(y=30, x=0)
+        tk.Label(logged_, text=f'Email = {info["email"]}', font=defaultfont).place(y=60, x=0)
+        tk.Label(logged_, text=f'Senha = {info["password"]}', font=defaultfont).place(y=90, x=0)
+        FLstatus = 'Ativado' if not self.isEmailUnique(info['email'], table='fastusers') else 'Desativado'
+        tk.Label(logged_, text=f'Login Rápido = {FLstatus}', font=defaultfont).place(y=120, x=0)
         
-        tk.Button(logged_, text='Sair', font=defaultfont, command=self.login).place(y=165, x=5)
+        tk.Button(logged_, text='[On/Off] Login Rápido', font=defaultfont,
+                  command=lambda: self.onoff_FastUser(info['name'],
+                                                      info['email'],
+                                                      info['password'])).place(y=155, x=5)
         
-        tk.Label(logged_, textvariable=self.outmsg, font=defaultfont).place(y=215, x=200, anchor='center')
+        tk.Button(logged_, text='Sair', font=defaultfont, command=self.login).place(y=200, x=5)
+        
+        tk.Label(logged_, textvariable=self.outmsg, font=defaultfont).place(y=230, x=200, anchor='center')
         self.activate(logged_)
         
     def choose(self):
@@ -244,5 +261,5 @@ class Gui:
         tk.Button(choose_, text='Login', font=('Times New Roman', 9), command=self.login).place(y=350, x=200, anchor='center')
 
         self.activate(choose_)
+
 Gui()
-# Todo: Acabar
