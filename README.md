@@ -7,4 +7,4 @@
  * Toda a GUI inserida em um classe (`Gui()`).
  * Verificação básica para que o mesmo Email não seja usado em vários registros e que a senha tenha entre 6 e 12 carácteres.
 
-OBS: Esse programa está na versão **Publish V.3**, que (Pelo menos até o momento) é entendida como sua versão final. Correções de erros, melhorias, novas idéias e/ou dúvidas e podem ser deixadas nas Issues, se possível proverei o pedido.
+OBS: Esse programa está na versão **Publish V1.3**, que, pelo menos até o momento, é entendida como sua versão final. Correções de erros, melhorias, novas idéias e/ou dúvidas podem ser deixadas nas Issues, se possível proverei o pedido.
