@@ -2,7 +2,8 @@ import tkinter as tk
 import sqlite3
 
 defaultfont = ('Times New Roman', 12)
-database = 'C:\\Users\\User\\Documents\\GitHub\\login-screen\\login-screen\\users.db'
+database = 'users.db'
+
 
 class Gui:
     def __init__(self):   
@@ -44,6 +45,7 @@ class Gui:
                 cursor.close()
                 con.commit()
         # TODO: Melhorar isso aqui :P
+    
     @staticmethod
     def getTableContent(table):
         with sqlite3.connect(database) as con:
@@ -72,16 +74,14 @@ class Gui:
         return len(out) > 0
     
     def isRegisterValid(self, name, email, password):
-        if name.strip() == '' or password.strip() == '' or not self.isEmailUnique(email, table='users'):
-            return False
-        return True
+        return (name != '' and password != '' and (12 >= len(password) >= 6) and self.isEmailUnique(email, table='fastusers'))
                     
     def activate(self, frame):
         if self.activeframe is not None:
             self.activeframe.destroy()
         self.activeframe = frame
         self.activeframe.pack()
-        
+    
     def newFastUser(self, name, email, password):
         if len(self.fastusers) >= 3:
             self.outmsg.set('Você já atingiu o limite de Logins Rápidos.')
@@ -108,11 +108,11 @@ class Gui:
         self.outmsg.set('Removido dos Logins Rápidos.')
     
     def newUser(self, name, email, password):
+        if 12 < len(password) or len(password) < 6:
+            self.outmsg.set('[ERRO: A senha deve ter entre 6 e 12 caracteres]')
+            return
         if not self.isRegisterValid(name, email, password):
             self.outmsg.set('[ERRO: Parâmetro(s) Inválido(s)/Email já em Uso]')
-            return
-        if 12 < len(password.strip()) < 6:
-            self.outmsg.set('[ERRO: A senha deve ter entre 6 e 12 caracteres]')
             return
         
         with sqlite3.connect(database) as con:
@@ -130,8 +130,7 @@ class Gui:
             self.newFastUser(name, email, password)
         else:
             self.delFastUser(email)
-        self.logged(email, password)
-        
+        self.logged(email, password)  
     
     # Frames
     def registering(self):
@@ -207,7 +206,7 @@ class Gui:
                                                       info['email'],
                                                       info['password'])).place(y=155, x=5)
         
-        tk.Button(logged_, text='Sair', font=defaultfont, command=self.login).place(y=200, x=5)
+        tk.Button(logged_, text='Voltar', font=defaultfont, command=self.choose).place(y=200, x=5)
         
         tk.Label(logged_, textvariable=self.outmsg, font=defaultfont).place(y=230, x=200, anchor='center')
         self.activate(logged_)
@@ -216,43 +215,33 @@ class Gui:
         choose_ = tk.Frame(self.root, width=500, height=400)
         tk.Label(choose_, text='Você Tem Logins Rápidos Salvos', 
                  font=('Times New Roman', 16)).place(y=12, x=200, anchor='center')
-
-
+        
         if len(self.fastusers) >= 1:
             account1 = self.fastusers[0]
-        
             tk.Label(choose_, text=f'> {account1["name"]} ({account1["email"]})',
                      font=('Times New Roman', 14)).place(x=5, y=50)
             tk.Button(choose_, text='Logar', font=defaultfont, 
                       command=lambda: self.logged(account1['email'], account1['password'])).place(x=5, y=80)
-            tk.Button(choose_, text='Remover de Logins Rápidos', font=defaultfont,
-                      command=lambda: self.delFastUser(account1['email'])).place(x=60, y=80)
         else:
             tk.Label(choose_, text='> Conta 1 (Vazio)', font=('Times New Roman', 14)).place(x=5, y=50)
             
             
         if len(self.fastusers) >= 2:
-            account2 = self.fastusers[1]
-            
+            account2 = self.fastusers[1]    
             tk.Label(choose_, text=f'> {account2["name"]} ({account2["email"]})',
                      font=('Times New Roman', 14)).place(x=5, y=150)
             tk.Button(choose_, text='Logar', font=defaultfont, 
                       command=lambda: self.logged(account2['email'], account2['password'])).place(x=5, y=180)
-            tk.Button(choose_, text='Remover de Logins Rápidos', font=defaultfont,
-                      command=lambda: self.delFastUser(account2['email'])).place(x=60, y=180)
         else:
             tk.Label(choose_, text='> Conta 2 (Vazio)', font=('Times New Roman', 14)).place(x=5, y=150)
         
         
         if len(self.fastusers) >= 3:
-            account3 = self.fastusers[2]
-            
+            account3 = self.fastusers[2]    
             tk.Label(choose_, text=f'> {account3["name"]} ({account3["email"]})',
                      font=('Times New Roman', 14)).place(x=5, y=250)
             tk.Button(choose_, text='Logar', font=defaultfont, 
                       command=lambda: self.logged(account3['email'], account3['password'])).place(x=5, y=280)
-            tk.Button(choose_, text='Remover de Logins Rápidos', font=defaultfont,
-                      command=lambda: self.delFastUser(account3['email'])).place(x=60, y=280)
         else:
             tk.Label(choose_, text='> Conta 3 (Vazio)', font=('Times New Roman', 14)).place(x=5, y=250)    
         
@@ -261,5 +250,6 @@ class Gui:
         tk.Button(choose_, text='Login', font=('Times New Roman', 9), command=self.login).place(y=350, x=200, anchor='center')
 
         self.activate(choose_)
+
 
 Gui()
